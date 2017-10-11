@@ -74,11 +74,11 @@
     <h3>Destaca tu ayuda, es gratis!</h3>
   </header>
   <div class="w3-container">
-    <form> 
-      <input class="w3-input" type="text" name="nombre" placeholder="Nombre"> <br>
-      <input class="w3-input" type="text" name="apaellido" placeholder="Apellidos"> <br>
-      <input class="w3-input" type="email" name="email" placeholder="Correo eletrónico"> <br>
-      <input class="w3-input" type="password" name="password" placeholder="Contraseña"><br>
+    <form @submit.prevent="login"> 
+      <input class="w3-input" type="text" name="nombre" placeholder="Nombre" v-model="user.nombre"> <br>
+      <input class="w3-input" type="text" name="apaellido" placeholder="Apellidos" v-model="user.ap"> <br>
+      <input class="w3-input" type="email" name="email" placeholder="Correo eletrónico" v-model="user.pass"> <br>
+      <input class="w3-input" type="password" name="password" placeholder="Contraseña" v-model="user.email"><br>
       <input class="w3-button w3-block w3-dark-grey" type="submit" value="Registrarse">
     </form>
   </div>
@@ -88,16 +88,53 @@
 </template>
 
 <script>
+import axios from 'axios'
 export default {
   name: 'Login',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      user : {
+        nombre : "",
+        ap : "",
+        pass : "",
+        email : ""
+      }
     }
   },
   methods : {
     login() {
-      alert('login');
+      var vm = this;
+
+      
+      axios.post('http://104.236.149.67/graphql',
+      {
+       "query": `mutation createAccount($input: CreateAccountInput!){
+              createAccount(input: $input){
+                  account{
+                    userId
+                    username
+                  }
+                }
+        }`,
+      "operationName": "createAccount",
+      "variables": { "input": {
+        "account": {
+            "username": vm.user.nombre + "-" + vm.user.ap,
+            "password": vm.user.pass,
+            "email": vm.user.email,
+            "createdOn" : new Date()
+          }
+      }
+      }
+      })
+  .then(function (response) {
+    var user = response.data.data.createAccount.account;
+    alert("Bienvenido " + user.username);
+    vm.$router.push({ name: 'Perfil', params: { id: user.userId }})
+  })
+  .catch(function (error) {
+    console.log(error.data[0]);
+  });
     },
     w3_open() {
       var mySidebar = document.getElementById("mySidebar");
